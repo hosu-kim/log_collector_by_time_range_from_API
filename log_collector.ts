@@ -54,7 +54,15 @@ async function collectLogsRecursively(
 	if (currentData.count === currentData.totalLogs) {
 		console.log(`In time range ${ startTime } - ${ endTime }, ${ currentData.count } logs fetched.`);
 		return currentData.logs;
-	} else if (startTime
+	} else if (startTime === endTime) {
+		console.log(`The time range cannot be split. Only fetches ${ currentData.count } logs.`);
+		return currentData.logs;
+	} else {
+		const midTime: Date = getMidtime(startTime, endTime);
+		const [lowerTimeRange, upperTimeRange]: [Log[], Log[]] = Promise.all([
+			collectLogsRecursively(startTime, midTime)
+		])
+	}
 }
 
 async function main() {
