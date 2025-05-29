@@ -59,9 +59,11 @@ async function collectLogsRecursively(
 		return currentData.logs;
 	} else {
 		const midTime: Date = getMidtime(startTime, endTime);
-		const [lowerTimeRange, upperTimeRange]: [Log[], Log[]] = Promise.all([
-			collectLogsRecursively(startTime, midTime)
-		])
+		const [lowerTimeRange, upperTimeRange]: [Log[], Log[]] = await Promise.all([
+			collectLogsRecursively(startTime, midTime),
+			collectLogsRecursively(midTime, endTime) // 1 밀리초 더해서 중복 기록 방지
+		]);
+		return [...lowerTimeRange, ...upperTimeRange];
 	}
 }
 
