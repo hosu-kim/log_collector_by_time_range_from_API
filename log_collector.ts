@@ -1,13 +1,11 @@
 const BASE_URL: string = 'https://apiendpoint/api/logs';
-const LAST_DAYS_TO_COLLECT_LOGS: number = 7;
-
+const LAST_DAYS_TO_COLLECT_LOGS: number = 7; // Modify me! :)
 
 // Object to store log data
 interface Log {
 	"timestampt": string;
 	"message": string;
 }
-
 
 // Object to store response data.
 interface ApiResponseData {
@@ -29,16 +27,18 @@ async function fetchResponseData(startTime: Date, endTime: Date): Promise<ApiRes
 	return response.json() as Promise<ApiResponseData>;
 }
 
-function getMidtime(startTime: Date, endTime: Date): Date {
+function getMidtime(startTime: Date, endTime: Date): Date[] {
 	// Converts time to timestamp (e.g, 1672531200000)
 	const startTimestamp: number = startTime.getTime();
 	const endTimestamp: number = endTime.getTime();
 
 	const midTimestamp: number = (startTimestamp + (endTimestamp - startTimestamp) / 2);
+	const midTimestampForUpperRange: number = midTimestamp + 1;
 
-	const midTime = new Date(midTimestamp);
+	const midTimeForLowerRange: Date = new Date(midTimestamp);
+	const midTimeForUpperRange: Date = new Date(midTimestampForUpperRange)
 
-	return midTime;
+	return [midTimeForLowerRange, midTimeForUpperRange];
 }
 
 async function collectLogsRecursively(
@@ -58,10 +58,10 @@ async function collectLogsRecursively(
 		console.log(`The time range cannot be split. Only fetches ${ currentData.count } logs.`);
 		return currentData.logs;
 	} else {
-		const midTime: Date = getMidtime(startTime, endTime);
+		const midTimes: Date[] = getMidtime(startTime, endTime);
 		const [lowerTimeRange, upperTimeRange]: [Log[], Log[]] = await Promise.all([
-			collectLogsRecursively(startTime, midTime),
-			collectLogsRecursively(midTime, endTime) // 1 밀리초 더해서 중복 기록 방지
+			collectLogsRecursively(startTime, midTimes[0]),
+			collectLogsRecursively(midTimes[1], endTime) // 1 밀리초 더해서 중복 기록 방지
 		]);
 		return [...lowerTimeRange, ...upperTimeRange];
 	}
@@ -90,5 +90,4 @@ async function main() {
 	} catch (error) {
 		console.error(`Error occured! ${ error }`);
 	}
-
 }
