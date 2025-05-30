@@ -61,7 +61,7 @@ async function collectLogsRecursively(
 		const midTimes: Date[] = getMidtime(startTime, endTime);
 		const [lowerTimeRange, upperTimeRange]: [Log[], Log[]] = await Promise.all([
 			collectLogsRecursively(startTime, midTimes[0]),
-			collectLogsRecursively(midTimes[1], endTime) // 1 밀리초 더해서 중복 기록 방지
+			collectLogsRecursively(midTimes[1], endTime)
 		]);
 		return [...lowerTimeRange, ...upperTimeRange];
 	}
