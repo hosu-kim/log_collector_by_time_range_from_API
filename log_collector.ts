@@ -3,7 +3,7 @@ const LAST_DAYS_TO_COLLECT_LOGS: number = 7; // Modify me! :)
 
 // Object to store log data
 interface Log {
-	"timestampt": string;
+	"timestamp": string;
 	"message": string;
 }
 
