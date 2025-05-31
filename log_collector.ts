@@ -1,5 +1,7 @@
 const BASE_URL: string = 'https://apiendpoint/api/logs';
-const LAST_DAYS_TO_COLLECT_LOGS: number = 7; // Modify me! :)
+const PAST_DAYS_TO_COLLECT_LOGS: number = 7; // Modify me! :)
+
+let totalApiCalls: number = 0;
 
 // Object to store log data
 interface Log {
@@ -22,6 +24,7 @@ async function fetchResponseData(startTime: Date, endTime: Date): Promise<ApiRes
 	const url: string = `${ BASE_URL }?startTime=${ apiStartTime }&endTime=${ apiEndTime }`;
 
 	const response: Response = await fetch(url);
+	totalApiCalls++;
 	if (!response.ok)
 		throw new Error(`Failed to fetch response! HTTP status: ${ response.status }`);
 	return response.json() as Promise<ApiResponseData>;
@@ -32,7 +35,7 @@ function getMidtime(startTime: Date, endTime: Date): Date[] {
 	const startTimestamp: number = startTime.getTime();
 	const endTimestamp: number = endTime.getTime();
 
-	const midTimestamp: number = (startTimestamp + (endTimestamp - startTimestamp) / 2);
+	const midTimestamp: number = Math.floor(startTimestamp + (endTimestamp - startTimestamp) / 2);
 	const midTimestampForUpperRange: number = midTimestamp + 1;
 
 	const midTimeForLowerRange: Date = new Date(midTimestamp);
@@ -46,7 +49,7 @@ async function collectLogsRecursively(
 	endTime: Date,
 	initialFetch?: ApiResponseData): Promise<Log[]> {
 	if (startTime > endTime) {
-		console.log('start time cannot be earlier than the end time.');
+		console.log('startTime cannot be earlier than endTime.');
 		return [];
 	}
 	const currentData: ApiResponseData = initialFetch ? initialFetch : await fetchResponseData(startTime, endTime);
@@ -73,7 +76,7 @@ async function main() {
 
 		const endTime: Date = new Date();
 		const startTime: Date = new Date();
-		startTime.setUTCDate(endTime.getUTCDate() - LAST_DAYS_TO_COLLECT_LOGS);
+		startTime.setUTCDate(endTime.getUTCDate() - PAST_DAYS_TO_COLLECT_LOGS);
 
 		const initialFetch: ApiResponseData = await fetchResponseData(startTime, endTime);
 		const totalLogs: number = initialFetch.totalLogs;
@@ -81,13 +84,12 @@ async function main() {
 
 		if (totalLogs === 0)
 			console.log('Fetching completed. No data found');
-		else if (totalLogs <= limitPerCall) {
+		else if (totalLogs <= limitPerCall)
 			logs = initialFetch.logs;
-		} else if (totalLogs > limitPerCall) {
+		else if (totalLogs > limitPerCall)
 			logs = await collectLogsRecursively(startTime, endTime, initialFetch);
-		}
-
+		console.log(`Summary: Total API calls=${ totalApiCalls }, Total collected logs=${ logs.length }`);
 	} catch (error) {
-		console.error(`Error occured! ${ error }`);
+		console.error(`Error occured! - ${ error }`);
 	}
 }
